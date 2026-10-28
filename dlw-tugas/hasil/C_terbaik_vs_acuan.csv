@@ -1,0 +1,7 @@
+,,param,param,val_MAE,val_MAE,test_MAE,test_MAE,test_MAPE,test_MAPE,natal_MAE,natal_MAE
+,,mean,std,mean,std,mean,std,mean,std,mean,std
+model,konfigurasi,,,,,,,,,,
+ANN,terbaik,2465.0,0.0,211.5,6.2,269.4,16.8,8.8,0.7,532.5,78.1
+GRU,terbaik,52737.0,0.0,188.7,4.2,220.3,10.6,7.5,0.8,435.2,7.5
+LSTM,terbaik,70273.0,0.0,207.1,8.4,245.6,6.7,8.3,0.3,491.1,7.6
+RNN,terbaik,5305.0,0.0,200.1,5.3,224.5,11.7,8.2,0.8,404.5,9.9

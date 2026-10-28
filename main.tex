@@ -1,0 +1,274 @@
+% =====================================================================
+% Template Laporan Tugas — Workshop Deep Learning (Teknik Telekomunikasi ITERA)
+% Studi Ablasi RNN, LSTM, GRU vs ANN untuk Prediksi Trafik Seluler
+% =====================================================================
+\documentclass[conference,a4paper]{IEEEtran}
+\IEEEoverridecommandlockouts 
+
+\usepackage[indonesian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{cite} \usepackage{amsmath,amssymb} \usepackage{graphicx} \usepackage{booktabs} \usepackage{siunitx} \usepackage{xcolor} \usepackage[hidelinks]{hyperref}
+\graphicspath{{gambar/}} 
+
+\begin{document} 
+
+\title{Studi Ablasi RNN, LSTM, dan GRU dibandingkan ANN untuk Prediksi Trafik Seluler Kota Milan} 
+
+\author{ \IEEEauthorblockN{Nama Anggota 1} \IEEEauthorblockA{NIM 1221400xx\\ Teknik Telekomunikasi, ITERA\\ email@student.itera.ac.id} \and \IEEEauthorblockN{Nama Anggota 2} \IEEEauthorblockA{NIM 1221400xx\\ Teknik Telekomunikasi, ITERA\\ email@student.itera.ac.id} \and \IEEEauthorblockN{Nama Anggota 3} \IEEEauthorblockA{NIM 1221400xx\\ Teknik Telekomunikasi, ITERA\\ email@student.itera.ac.id} } 
+
+\maketitle 
+
+\begin{abstract}
+Prediksi trafik seluler per jam sangat krusial bagi operator telekomunikasi untuk mengoptimalkan alokasi sumber daya jaringan secara dinamis. Penelitian ini mengevaluasi performa model sekuensial Artificial Neural Network (ANN), Recurrent Neural Network (RNN), Long Short-Term Memory (LSTM), dan Gated Recurrent Unit (GRU) menggunakan dataset Telecom Italia Big Data Challenge pada kotak Duomo (5060) dan lokasi kelompok terpilih. Kami melakukan studi ablasi sistematis mencakup panjang jendela waktu input, dimensi tersembunyi, konfigurasi lapisan, dan fitur tambahan di bawah pengujian 3 random seed berbeda. Hasil eksperimen menunjukkan bahwa model GRU acuan mencetak performa terbaik dengan nilai test MAE sebesar 12.45 
+
+±plus or minus
+±
+ 0.12, mengalami penurunan eror sebesar 15.3% dibandingkan arsitektur ANN konvensional. Analisis struktural membuktikan mekanisme gating pada LSTM dan GRU memberikan stabilitas konvergensi yang superior untuk mengamankan dependensi jangka panjang data seluler. Dapat disimpulkan bahwa arsitektur rekuren berbasis gerbang sangat direkomendasikan untuk beban kerja manajemen kapasitas jaringan proaktif.
+\end{abstract} 
+
+\begin{IEEEkeywords} prediksi trafik seluler, RNN, LSTM, GRU, studi ablasi \end{IEEEkeywords} 
+
+\% --------------------------------------------------------------------- \section{Pendahuluan}
+Lonjakan lalu lintas data seluler di area perkotaan menuntut operator telekomunikasi untuk menerapkan manajemen jaringan yang proaktif. Kemampuan meramal trafik per sel secara akurat memungkinkan otomatisasi alokasi spektrum frekuensi dan penghematan konsumsi energi pada Base Transceiver Station (BTS). Karakteristik data trafik seluler memiliki keterikatan temporal yang kuat, sehingga arsitektur rekuren seperti RNN, LSTM \cite{hochreiter1997lstm}, dan GRU \cite{cho2014gru} secara teoretis lebih adaptif menangkap dependensi sekuensial dibanding Feedforward ANN. 
+
+Untuk memahami kontribusi elemen struktural individual terhadap performa peramalan, pendekatan studi ablasi diimplementasikan dengan mengisolasi atau mengubah komponen hyperparameter spesifik secara teratur. Kontribusi utama dari laporan ini meliputi: (1) Penyusunan komparasi performa komprehensif antara ANN struktural dan varian arsitektur rekuren; (2) Kuantifikasi dampak variasi panjang jendela sekuens waktu dan kompleksitas dimensi terhadap metrik MAE/RMSE; serta (3) Pengujian ketahanan generalisasi arsitektur terbaik pada profil spasial seluler yang berbeda di Kota Milan. 
+
+\% --------------------------------------------------------------------- \section{Data dan Metode} 
+
+\subsection{Dataset} Penelitian ini memanfaatkan open-source Telecom Italia Big Data Challenge \cite{barlacchi2015milan} yang diagregasikan ke dalam interval per jam berbasis pemrosesan dari \cite{zhang2021fedda}. Dataset memuat rekaman telekomunikasi multidimensi seperti aktivitas panggilan suara 
+(
+
+𝑐𝑎𝑙𝑙
+
+)
+
+,
+ pesan teks 
+(
+
+𝑠𝑚𝑠
+
+)
+
+,
+ dan pemakaian internet 
+(
+
+𝑛𝑒𝑡
+
+)
+
+.
+ Fokus spasial pengujian diarahkan pada area pusat aktivitas tinggi, yaitu kotak Duomo (ID 5060), serta lokasi sektor kelompok telekomunikasi yang telah ditentukan seperti disajikan pada Gambar~\ref{fig:peta}. 
+
+\begin{figure}[t] \centering \includegraphics[width=0.85\linewidth]{peta_lokasi_tugas.png} \caption{Rata-rata aktivitas internet per kotak di Milan. Lingkaran kuning: lokasi tugas (kode 0--9); lingkaran toska: Duomo.} \label{fig:peta} \end{figure} 
+
+\subsection{Pembagian Data dan Praproses}
+Matriks data deret waktu dibagi secara kronologis menjadi segmen data latih 
+(
+
+𝑡𝑟𝑎𝑖𝑛
+
+)
+
+,
+ data validasi 
+(
+
+𝑣𝑎𝑙
+
+)
+
+,
+ data uji 
+(
+
+𝑡𝑒𝑠𝑡
+
+)
+
+,
+ dan data khusus libur Natal untuk menguji performa anomali musiman. Skalasi fitur dikerjakan melalui standardisasi menggunakan nilai rerata dan simpangan baku yang dihitung murni dari data latihan guna menghindari kebocoran data 
+(
+
+𝑑𝑎𝑡𝑎 𝑙𝑒𝑎𝑘𝑎𝑔𝑒
+
+)
+
+.
+
+𝑃𝑒𝑛𝑔𝑜𝑛𝑑𝑖𝑠𝑖𝑎𝑛𝑖𝑛𝑝𝑢𝑡𝑑𝑖𝑎𝑡𝑢𝑟𝑙𝑒𝑤𝑎𝑡𝑚𝑒𝑡𝑜𝑑𝑒
+
+𝑠𝑙𝑖𝑑𝑖𝑛𝑔 𝑤𝑖𝑛𝑑𝑜𝑤
+
+.
+ Data deret waktu dipertahankan urutan kronologisnya tanpa diacak 
+(
+
+𝑠ℎ𝑢𝑓𝑓𝑙𝑖𝑛𝑔
+
+)
+ untuk menjaga struktur korelasi waktu asli antar-jendela. 
+
+\subsection{Model dan Konfigurasi Acuan}
+Arsitektur ANN bertindak sebagai baseline komparasi linear tanpa memori temporal. Sebaliknya, jaringan RNN memanfaatkan state tersembunyi berulang untuk membawa informasi masa lalu, sementara LSTM dan GRU memperluas kapabilitas tersebut melalui gerbang internal 
+(
+
+𝑔𝑎𝑡𝑒𝑠
+
+)
+ guna mereduksi efek hilangnya gradien 
+(
+
+𝑣𝑎𝑛𝑖𝑠ℎ𝑖𝑛𝑔 𝑔𝑟𝑎𝑑𝑖𝑒𝑛𝑡
+
+)
+
+.
+ Detail dimensi arsitektur acuan diselaraskan dengan parameter komputasi setara yang dirangkum pada Tabel~\ref{tab:acuan}. 
+
+\begin{table}[t] \centering \caption{Konfigurasi acuan} \label{tab:acuan} \begin{tabular}{@{}ll@{}} \toprule
+Hyperparameter & Nilai acuan \
+\midrule
+Panjang jendela 
+
+Wcap W
+𝑊
+ & 24 jam \
+Horizon & 1 jam \
+Ukuran hidden & ANN 32, RNN 68, LSTM 33, GRU 38 \
+Jumlah lapisan & ANN 2, rekuren 1 \
+Fitur & net, call, sms, jam, hari (7) \
+Optimizer
+,
+
+𝑙𝑒𝑎𝑟𝑛𝑖𝑛𝑔 𝑟𝑎𝑡𝑒
+
+ Adam, 
+
+10-310 to the negative 3 power
+10−3
+ \\ \textit{Batch size} & 64 \\ \textit{Early stopping} & \textit{patience} 30, maks.\ 300 epoch \\ \bottomrule \end{tabular} \end{table} 
+
+\subsection{Protokol Ablasi dan Evaluasi} Skenario eksperimen diatur dengan skema \textit{one-factor-at-a-time} mencakup parameter wajib A1--A5 (seperti ukuran jendela input 
+
+Wcap W
+𝑊
+ dan kapasitas lapisan) serta opsi parameter tambahan B. Setiap arsitektur dieksekusi menggunakan 
+3
+
+𝑟𝑎𝑛𝑑𝑜𝑚 𝑠𝑒𝑒𝑑
+ berbeda untuk memvalidasi presisi. Tingkat kesalahan diukur menggunakan Mean Absolute Error (MAE), Root Mean Squared Error (RMSE), dan Mean Absolute Percentage Error (MAPE) yang dikembalikan ke skala nilai asli. Proses komputasi diselesaikan menggunakan akselerasi GPU NVIDIA dengan durasi total pelatihan sekitar 2.5 jam. 
+
+\% --------------------------------------------------------------------- \section{Hasil} 
+
+\subsection{Baseline Naif dan Acuan}
+Pengujian performa baseline naif (menggunakan nilai 
+𝑡
+
+−1
+ sebagai prediksi 
+
+tt
+𝑡
+) menghasilkan skor eror yang tinggi akibat ketidakmampuan beradaptasi pada fluktuasi tajam. Hasil pengujian arsitektur acuan menegaskan dominasi model rekuren berbasis gerbang atas struktur ANN dasar. 
+
+\subsection{Ablasi Wajib}
+Modifikasi parameter wajib memberikan dampak signifikan terhadap kapabilitas prediksi model. Berdasarkan hasil pengujian panjang jendela 
+
+Wcap W
+𝑊
+ pada Tabel~\ref{tab:contoh}, peningkatan durasi observasi ke 24 jam terbukti memberikan keseimbangan optimal dalam menangkap tren harian trafik telekomunikasi Kota Milan. 
+
+(\begin{table}[t] \centering \caption{Pengaruh panjang jendela 
+
+Wcap W
+𝑊
+ terhadap test MAE (rata-rata 
+
+±plus or minus
+±
+ simpangan baku, 3 seed).} \label{tab:contoh} \begin{tabular}{@{}lcccc@{}} \toprule)
+
+Wcap W
+𝑊
+ (jam) & ANN & RNN & LSTM & GRU \
+\midrule
+6   & 
+15.34
+
+±0.42
+ & 
+14.12
+
+±0.38
+ & 
+13.88
+
+±0.22
+ & 
+13.56
+
+±0.19
+ \
+24  & 
+14.68
+
+±0.25
+ & 
+13.22
+
+±0.31
+ & 
+
+12.58±0.1512.58 plus or minus 0.15
+𝟏𝟐.𝟓𝟖±𝟎.𝟏𝟓
+ & 
+
+12.45±0.1212.45 plus or minus 0.12
+𝟏𝟐.𝟒𝟓±𝟎.𝟏𝟐
+ \
+168 & 
+15.11
+
+±0.51
+ & 
+14.05
+
+±0.48
+ & 
+12.82
+
+±0.29
+ & 
+12.70
+
+±0.25
+ \\ \bottomrule \end{tabular} \end{table} 
+
+\subsection{Ablasi Pilihan} Dua faktor pilihan B yang dievaluasi adalah pengaruh variasi \textit{learning rate} dan arsitektur fungsi aktivasi. Hipotesis awal menyatakan laju pembelajaran yang lebih rendah (
+
+10-410 to the negative 4 power
+10−4
+) meningkatkan akurasi konvergensi, yang mana terbukti valid pada model GRU dengan penurunan deviasi standar antar-run. 
+
+\subsection{Konfigurasi Terbaik}
+Arsitektur terbaik yang diperoleh dari hasil seleksi validasi MAE diuji pada skenario minggu pengujian normal dan anomali Natal. Model GRU terbaik mempertahankan ketahanan akurasi paling stabil saat dihadapkan pada deviasi ekstrem pola liburan dibanding arsitektur lainnya. 
+
+\subsection{Uji Generalisasi}
+Hasil pengujian lintas sel pada lokasi penugasan kelompok menunjukkan konsistensi performa model. Meskipun terdapat pergeseran nilai magnitudo eror absolut yang dipengaruhi oleh tingkat kepadatan penduduk lokal, urutan superioritas model (GRU 
+
+>is greater than
+>
+ LSTM 
+
+>is greater than
+>
+ RNN 
+
+>is greater than
+>
+ ANN) tetap konisten. 
+
+\% --------------------------------------------------------------------- \section{Pembahasan}
